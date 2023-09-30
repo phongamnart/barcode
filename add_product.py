@@ -64,8 +64,8 @@ class AddProductWindow(QMainWindow):
         
         self.table = QTableWidget(self)
         self.layout.addWidget(self.table)
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(['name_product', 'barcode', 'price', 'quantity'])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(['Name product', 'Barcode', 'Price', 'Quantity', 'Delete'])
         
         self.load_data()
 
@@ -94,6 +94,9 @@ class AddProductWindow(QMainWindow):
             cursor.close()
             connection.close()
 
+            # อัปเดตตารางเมื่อเพิ่มสินค้า
+            self.load_data()
+
         except mysql.connector.Error as err:
             print("Error: {}".format(err))
             QMessageBox.warning(self, 'Error', 'An error occurred while adding the product.')
@@ -118,6 +121,10 @@ class AddProductWindow(QMainWindow):
                 for col_num, cell_data in enumerate(row_data):
                     item = QTableWidgetItem(str(cell_data))
                     self.table.setItem(row_num, col_num, item)
+                    
+                delete_button = QPushButton('Delete', self)
+                delete_button.clicked.connect(lambda _, row=row_num: self.delete_product(row))
+                self.table.setCellWidget(row_num, 4, delete_button)
 
             cursor.close()
             connection.close()
@@ -126,6 +133,36 @@ class AddProductWindow(QMainWindow):
             print("Error: {}".format(err))
             QMessageBox.warning(self, 'Error', 'An error occurred while loading data.')
 
+    def delete_product(self, row):
+        try:
+            connection = mysql.connector.connect(
+                host='localhost',
+                user='nart',
+                password='tamarin17',
+                database='product'
+            )
+
+            cursor = connection.cursor()
+            name = self.table.item(row, 0).text()  # รับชื่อสินค้าจากคอลัมน์ที่ 0 (Name)
+            reply = QMessageBox.question(self, 'Delete Confirmation', f'Do you want to delete the product "{name}"?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            
+            if reply == QMessageBox.Yes:
+                query = "DELETE FROM add_product WHERE name_product = %s"
+                cursor.execute(query, (name,))
+                connection.commit()
+
+                self.load_data()
+
+                QMessageBox.information(self, 'Success', 'Product deleted successfully.')
+            else:
+                QMessageBox.information(self, 'Delete Cancelled', 'Product deletion cancelled.')
+
+            cursor.close()
+            connection.close()
+
+        except mysql.connector.Error as err:
+            print("Error: {}".format(err))
+            QMessageBox.warning(self, 'Error', 'An error occurred while deleting the product.')
 
     def clear_inputs(self):
         self.name_input.clear()
