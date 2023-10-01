@@ -143,7 +143,7 @@ class AddProductWindow(QMainWindow):
             )
 
             cursor = connection.cursor()
-            name = self.table.item(row, 0).text()  # รับชื่อสินค้าจากคอลัมน์ที่ 0 (Name)
+            name = self.table.item(row, 0).text()
             reply = QMessageBox.question(self, 'Delete Confirmation', f'Do you want to delete the product "{name}"?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             
             if reply == QMessageBox.Yes:
